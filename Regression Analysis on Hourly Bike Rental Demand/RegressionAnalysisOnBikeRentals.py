@@ -93,16 +93,17 @@ for feature in features:
 # Solar Radiation ( Daytime )
 day_df = df[df['Solar Radiation (MJ/m2)'] > 0]
 
-X = day_df[['Solar Radiation (MJ/m2)']]
-y = day_df['Rented Bike Count']
+X_day = day_df[['Solar Radiation (MJ/m2)']]
+y_day = day_df['Rented Bike Count']
 
-model = LinearRegression().fit(X, y)
-y_pred = model.predict(X)
-r2 = r2_score(y, y_pred)
+
+model = LinearRegression().fit(X_day, y_day)
+y_pred = model.predict(X_day)
+r2 = r2_score(y_day, y_pred)
 
 plt.figure(figsize=(6,5))
-sns.scatterplot(x=X['Solar Radiation (MJ/m2)'], y=y, alpha=0.5)
-plt.plot(X, y_pred, color='red', label=f'Fit Line (R²={r2:.2f})')
+sns.scatterplot(x=X_day['Solar Radiation (MJ/m2)'], y=y_day, alpha=0.5)
+plt.plot(X_day, y_pred, color='red', label=f'Fit Line (R²={r2:.2f})')
 plt.title('Solar Radiation vs Rented Bike Count (Daytime Only)')
 plt.legend()
 plt.show()
@@ -116,7 +117,6 @@ print(r2_df)
 # Creating the model
 model = LinearRegression()
 model.fit(X_train_scaled, y_train)
-
 
 residuals = y_train - model.predict(X_train_scaled)
 mask = npy.abs(residuals) < (3 * residuals.std())
@@ -135,7 +135,10 @@ print("R²:", r2)
 
 
 # model coefficients 
-coeffs = pd.DataFrame({ "feature": X.columns, "coefficient": model.coef_ }) 
+coeffs = pd.DataFrame({
+    "feature": df.drop(columns=["Rented Bike Count"]).columns,
+    "coefficient": model.coef_
+})
 coeffs = coeffs.sort_values(by='coefficient', ascending=False)
 print("Coefficient", coeffs)
 
@@ -145,6 +148,22 @@ plt.xticks(rotation=45)
 plt.title("Coefficient Values")
 plt.tight_layout()
 plt.show()
+
+# Creating the regression equation
+intercept = model.intercept_
+coefficients = model.coef_
+
+# Use the correct feature names from the training data
+attribute_names = df.drop(columns=["Rented Bike Count"]).columns
+
+equation = f"Rented Bike Count = {intercept:.3f}"
+for feature, coef in zip(attribute_names, coefficients):
+    sign = "+" if coef >= 0 else "-"
+    equation += f" {sign} {abs(coef):.3f} × {feature}"
+
+print("\nRegression Equation:", equation)
+
+
 
 # Plotting scatter plot
 plt.figure(figsize=(6, 5))
