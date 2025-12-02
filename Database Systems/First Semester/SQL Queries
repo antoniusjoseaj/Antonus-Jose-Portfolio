@@ -1,0 +1,137 @@
+--1
+-- Finds all male and female customers born in 1999 who made transactions in 2023, showing how many sales each made and which staff handled them.
+SELECT CONCAT('Mr. ',CustomerName) AS [Customer Name],
+CONCAT(st.StaffID,'-', StaffName) AS [Staff Name],
+COUNT(sa.SaleID) AS [Total Transaction Made]
+FROM Customer cu JOIN Sale sa
+ON cu.CustomerID = sa.CustomerID
+JOIN Staff st ON sa.StaffID = st.StaffID
+WHERE CustomerGender LIKE 'Male' AND YEAR(TransactionDate) = 2023 AND YEAR(CustomerDOB) = 1999
+GROUP BY cu.CustomerName, st.StaffName, st.StaffID
+UNION
+SELECT CONCAT('Mrs. ',CustomerName) AS [Customer Name],
+CONCAT(st.StaffID,'-', StaffName) AS [Staff Name],
+COUNT(sa.SaleID) AS [Total Transaction Made]
+FROM Customer cu JOIN Sale sa
+ON cu.CustomerID = sa.CustomerID
+JOIN Staff st ON sa.StaffID = st.StaffID
+WHERE CustomerGender LIKE 'Female' AND YEAR(TransactionDate) = 2023 AND YEAR(CustomerDOB) = 1999
+GROUP BY cu.CustomerName, st.StaffName, st.StaffID
+
+--2
+-- Identifies products sold in small quantities (1–5 units) within sales whose IDs end with even numbers, summarizing total quantities per product.
+SELECT REPLACE(sd.SaleID, 'SH', 'SalesID') AS [Sales ID],
+ProductName,
+SUM(sd.Quantity) AS [Total Product Sold]
+FROM SaleDetail sd JOIN ElectronicProduct ep 
+ON sd.ProductID = ep.ProductID
+WHERE RIGHT(sd.SaleID, 3) % 2 = 0 AND Quantity BETWEEN 1 AND 5
+GROUP BY REPLACE(sd.SaleID, 'SH', 'SalesID'), ProductName
+
+--3
+-- Lists purchase transactions where staff names are longer than five characters and item quantities are between 1–5, showing total purchases and quantities per vendor while masking staff emails.
+SELECT pd.PurchaseID, STUFF(StaffEmail, CHARINDEX('@', StaffEmail), LEN(StaffEmail), '@DigiBoxZ.com') AS [Staff Email], VendorName,
+COUNT(pd.PurchaseID) AS [Total Purchases Made],
+SUM(pd.Quantity) AS [Total Quantity]
+FROM PurchaseDetail pd JOIN Purchase pch
+ON pd.PurchaseID = pch.PurchaseID 
+JOIN Staff st ON pch.StaffID = st.StaffID JOIN Vendor vd ON vd.VendorID = pch.VendorID
+WHERE�LEN(StaffName) > 5 AND pd.Quantity BETWEEN 1 AND 5
+GROUP BY pd.PurchaseID, STUFF(StaffEmail, CHARINDEX('@', StaffEmail), LEN(StaffEmail), '@DigiBoxZ.com'), VendorName
+
+--4
+-- Summarizes 2023 sales in the first and second quarters, showing customer names, formatted sales dates, total items sold, and number of transactions.
+SELECT REPLACE(sa.SaleID, 'SH', ' SalesID') AS [SalesID],
+CustomerName,
+CONVERT(VARCHAR, TransactionDate, 107) AS [Sales Date],
+DATEPART(QUARTER, TransactionDate) AS [Sales Date Quarter],
+SUM(sd.Quantity) AS [Total Product Sold],
+COUNT(sa.SaleID) AS [Total Sales Transactions Made]
+FROM Customer cu JOIN Sale sa ON cu.CustomerID = sa.CustomerID 
+JOIN SaleDetail sd ON sa.SaleID = sd.SaleID
+WHERE YEAR(TransactionDate) = 2023 AND DATEPART(QUARTER, TransactionDate) IN (1, 2)
+GROUP BY REPLACE(sa.SaleID, 'SH', ' SalesID'), CustomerName, 
+CONVERT(VARCHAR, TransactionDate, 107), TransactionDate
+
+--5
+-- Displays products with above-average prices bought in odd-numbered purchase IDs, along with related staff and price comparisons.
+SELECT DISTINCT RIGHT(ep.ProductID, 3) AS [Product ID],
+CONCAT(REPLACE(st.StaffID, 'ST', 'Staff'), ' - ', StaffName) AS [Staff Name],
+CONCAT(REPLACE(ep.ProductID, 'PT', 'Product'), ' - ', ProductName) AS [Product Name], ep.Price, x.AveragePrice
+FROM ElectronicProduct ep JOIN SaleDetail sd
+ON ep.ProductID = sd.ProductID
+JOIN Sale sa ON sd.SaleID = sa.SaleID
+JOIN Staff st ON sa.StaffID = st.StaffID JOIN PurchaseDetail pd ON pd.ProductID = ep.ProductID,
+(SELECT AVG(Price) AS AveragePrice FROM ElectronicProduct) x
+WHERE RIGHT(PurchaseID, 3) % 2 = 1 AND Price > x.AveragePrice
+
+--6
+-- Shows 2023 sales where the product’s price is low relative to the total price sum of all products, including sales date, category, and formatted quantity/price.
+SELECT sa.SaleID, CONVERT(VARCHAR, TransactionDate, 106) AS [Sales Date], ProductName, CategoryName,
+CONCAT(sd.Quantity, ' PCS') AS [Quantity], CONCAT('$', Price) AS [Product Price]
+FROM Sale sa JOIN SaleDetail sd 
+ON sa.SaleID = sd.SaleID
+JOIN ElectronicProduct ep ON sd.ProductID = ep.ProductID
+JOIN ProductCategory epc ON ep.CategoryID = epc.CategoryID,
+(SELECT SUM(ep.Price) AS TotalPrice FROM ElectronicProduct ep) x
+WHERE YEAR(sa.TransactionDate) = 2023  AND (x.TotalPrice - ep.Price) > 14000
+
+--7
+-- Lists 2023 sales of products where quantity exceeds 4 and the price is below the overall (max−min) price range, showing masked customer emails and sales details.
+SELECT sa.SaleID, STUFF(CustomerEmail, CHARINDEX('@', CustomerEmail), LEN(CustomerEmail), '@DigiBoxZ.com') AS [Customer Email],
+CONVERT(VARCHAR, TransactionDate, 107) AS [Sales Date], ProductName, Price, x.[Result of MaxPrice - MinPrice]
+FROM Customer cu JOIN Sale sa ON cu.CustomerID = sa.CustomerID
+JOIN SaleDetail sd ON sa.SaleID = sd.SaleID
+JOIN ElectronicProduct ep ON sd.ProductID = ep.ProductID,
+(SELECT MAX(Price) - MIN(Price) AS [Result of MaxPrice - MinPrice] FROM ElectronicProduct) x
+WHERE sd.Quantity > 4 AND Price <= x.[Result of MaxPrice - MinPrice]
+
+--8
+-- Identifies “VIP” customers whose total spending in specific months (Feb, Apr, Jul) exceeded the average transaction value across all sales.
+SELECT s.SaleID,
+CONCAT('VIP CUSTOMER - ', UPPER(c.CustomerName)) AS "VIP Customer",
+MONTH(s.TransactionDate) AS "Month",
+CONCAT('$ ', CAST(SUM(ep.Price * sd.Quantity) AS VARCHAR(10))) AS "Total Expenses"
+FROM
+Sale s JOIN SaleDetail sd ON S.SaleID = sd.SaleID
+JOIN ElectronicProduct ep ON sd.ProductID = ep.ProductID
+JOIN Customer c ON s.CustomerID = c.CustomerID,
+(SELECT AVG(ep.Price * sd.Quantity) Average FROM SaleDetail sd JOIN ElectronicProduct ep ON sd.ProductID = ep.ProductID)x
+WHERE 
+MONTH(s.TransactionDate) IN (2, 4, 7)
+AND ep.Price * sd.Quantity > x.Average
+GROUP BY s.SaleID, c.CustomerName, s.TransactionDate
+
+--9
+-- Creates a view summarizing, for each sale, the most and least purchased product quantities by customers who bought high-weight and high-price products.
+CREATE VIEW MostAndLessBoughtProductPerCustomer AS
+SELECT
+    REPLACE(s.SaleID, 'SH', 'Sales ID ') AS "Sales ID",
+    REPLACE(sd.ProductID, 'PT','Product ID ') AS "ProductID",
+    CONVERT(VARCHAR, s.TransactionDate,107) AS "SalesDate",
+    MAX(pd.Quantity) AS "Most Bought Product",
+    MIN(pd.Quantity) AS "Less Bought Product"
+FROM Sale s JOIN SaleDetail sd ON s.SaleID = sd.SaleID
+JOIN ElectronicProduct ep ON sd.ProductID = ep.ProductID
+JOIN PurchaseDetail pd ON sd.ProductID = pd.ProductID
+WHERE ep.Weight > 180 AND ep.Price > 1500
+GROUP BY s.SaleID, sd.ProductID, s.TransactionDate
+
+SELECT * FROM MostAndLessBoughtProductPerCustomer
+DROP VIEW MostAndLessBoughtProductPerCustomer
+
+--10
+-- Creates a view of 2023 customers whose total transaction spending exceeded their own single highest purchase amount, highlighting high-spending customers.
+CREATE VIEW SpendAboveMaximumTotalSalesCustomerIn2023 AS 
+SELECT UPPER(CustomerName) AS [Customer Name],
+SUM(Price*sd.Quantity) AS [Total Transaction],
+MAX(Price*sd.Quantity) AS [Max Total Transaction]
+FROM Customer c JOIN Sale s ON c.CustomerID = s.CustomerID
+JOIN SaleDetail sd ON s.SaleID = sd.SaleID
+JOIN ElectronicProduct ep ON sd.ProductID = ep.ProductID
+WHERE YEAR(TransactionDate) = 2023
+GROUP BY UPPER(CustomerName)
+HAVING SUM(Price*sd.Quantity) > MAX(Price*sd.Quantity)
+
+SELECT * FROM SpendAboveMaximumTotalSalesCustomerIn2023
+DROP VIEW SpendAboveMaximumTotalSalesCustomerIn2023
