@@ -1,0 +1,254 @@
+CREATE DATABASE JigiBoxZ
+go
+USE JigiBoxZ
+go
+
+CREATE TABLE Customer (
+CustomerID CHAR(5) NOT NULL PRIMARY KEY CHECK ( CustomerID LIKE ( 'CU[0-9][0-9][0-9]') ),
+CustomerName VARCHAR(150) NOT NULL,
+CustomerGender VARCHAR(20) NOT NULL CHECK ( CustomerGender IN ('Male','Female') ),
+CustomerEmail VARCHAR(150) NOT NULL,
+CustomerDOB DATE NOT NULL CHECK (CustomerDOB < '2000-01-01'),
+CustomerAddress VARCHAR(200) NOT NULL
+)
+
+CREATE TABLE Vendor ( 
+VendorID CHAR(5) NOT NULL PRIMARY KEY CHECK ( VendorID LIKE ( 'VR[0-9][0-9][0-9]')),
+VendorName VARCHAR(150) NOT NULL,
+VendorGender VARCHAR(20) NOT NULL CHECK ( VendorGender IN ('Male','Female') ),
+VendorEmail VARCHAR(150) NOT NULL,
+VendorDOB DATE NOT NULL CHECK ( VendorDOB < '2000-01-01'),
+VendorAddress VARCHAR(200) NOT NULL
+)
+
+CREATE TABLE Staff (
+    StaffID CHAR(5) NOT NULL PRIMARY KEY CHECK ( StaffID LIKE ( 'ST[0-9][0-9][0-9]') ),
+    StaffName VARCHAR(150) NOT NULL,
+    StaffEmail VARCHAR(150) NOT NULL,
+    StaffGender VARCHAR(20) CHECK (StaffGender IN ('Male', 'Female')),
+    StaffDOB DATE CHECK (StaffDOB < '2000-01-01'),
+    StaffAddress VARCHAR(200) NOT NULL
+)
+
+CREATE TABLE ProductCategory (
+    CategoryID CHAR(5) NOT NULL PRIMARY KEY CHECK ( CategoryID LIKE ( 'CT[0-9][0-9][0-9]') ),
+    CategoryName VARCHAR(150) NOT NULL CHECK (CategoryName IN 
+	('Mobile Phones', 'Smartphones', 'Android Phones', 'IOS Devices', 'Budget Smartphones', 'Flagship Phones', 
+	'Phone Accessories', 'Phone Cases', 'Wireless Earbuds', 'Mobile Phone Chargers'))
+)
+
+CREATE TABLE ElectronicProduct (
+    ProductID CHAR(5) NOT NULL PRIMARY KEY CHECK ( ProductID LIKE ( 'PT[0-9][0-9][0-9]') ),
+    CategoryID CHAR(5) NOT NULL,
+    ProductName VARCHAR(150) NOT NULL CHECK (LEN(ProductName) > 10),
+    Price INT NOT NULL CHECK (Price BETWEEN 1000 AND 2200),
+    Weight INT NOT NULL,
+	FOREIGN KEY (CategoryID) REFERENCES ProductCategory (CategoryID) ON UPDATE CASCADE ON DELETE CASCADE
+)
+
+CREATE TABLE SaleDetail (
+SaleID CHAR(5) NOT NULL PRIMARY KEY CHECK ( SaleID LIKE ( 'SH[0-9][0-9][0-9]') ),
+ProductID CHAR(5) NOT NULL CHECK ( ProductID LIKE ( 'PT[0-9][0-9][0-9]') ),
+Quantity INT,
+FOREIGN KEY (ProductID) REFERENCES ElectronicProduct (ProductID) ON UPDATE CASCADE ON DELETE CASCADE
+)
+
+CREATE TABLE PurchaseDetail (
+    PurchaseID CHAR(5) NOT NULL PRIMARY KEY CHECK ( PurchaseID LIKE ( 'PH[0-9][0-9][0-9]') ),
+    ProductID CHAR(5) NOT NULL CHECK ( ProductID LIKE ( 'PT[0-9][0-9][0-9]') ),
+	Quantity INT,
+	FOREIGN KEY (ProductID) REFERENCES ElectronicProduct (ProductID) ON UPDATE CASCADE ON DELETE CASCADE
+)
+
+CREATE TABLE Purchase (
+    PurchaseID CHAR(5) NOT NULL PRIMARY KEY CHECK ( PurchaseID LIKE ( 'PH[0-9][0-9][0-9]') ),
+    StaffID CHAR(5) NOT NULL  CHECK ( StaffID LIKE ( 'ST[0-9][0-9][0-9]') ),
+	VendorID CHAR(5) NOT NULL CHECK ( VendorID LIKE ( 'VR[0-9][0-9][0-9]')),
+	PurchaseDate DATE,
+	FOREIGN KEY (PurchaseID) REFERENCES PurchaseDetail (PurchaseID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (StaffID) REFERENCES Staff (StaffID) ON UPDATE CASCADE ON DELETE CASCADE,
+	FOREIGN KEY (VendorID) REFERENCES Vendor (VendorID) ON UPDATE CASCADE ON DELETE CASCADE
+)
+
+CREATE TABLE Sale (
+SaleID CHAR(5) PRIMARY KEY NOT NULL,
+    StaffID CHAR(5) NOT NULL,
+    CustomerID CHAR(5) NOT NULL,
+    TransactionDate DATE NOT NULL,
+    FOREIGN KEY (SaleID) REFERENCES SaleDetail (SaleID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (StaffID) REFERENCES Staff (StaffID) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY (CustomerID) REFERENCES Customer (CustomerID) ON UPDATE CASCADE ON DELETE CASCADE
+)
+
+
+INSERT INTO ProductCategory (CategoryID, CategoryName)
+VALUES 
+('CT001', 'Mobile Phones'),
+('CT002', 'Smartphones'),
+('CT003', 'Android Phones'),
+('CT004', 'IOS Devices'),
+('CT005', 'Budget Smartphones'),
+('CT006', 'Flagship Phones'),
+('CT007', 'Phone Accessories'),
+('CT008', 'Phone Cases'),
+('CT009', 'Wireless Earbuds'),
+('CT010', 'Mobile Phone Chargers')
+
+
+INSERT INTO ElectronicProduct (ProductID, CategoryID, ProductName, Price, Weight)
+VALUES 
+('PT001', 'CT001', 'Super Mobilephone III', 1550, 190),
+('PT002', 'CT002', 'SmartphonePro V', 1600, 185),
+('PT003', 'CT004', 'IOS Super Model 1.0 ', 2200, 210), 
+('PT004', 'CT005', 'Budget Phone Model Z', 1000, 90),
+('PT005', 'CT007', 'Wireless Charging Pad', 1100, 120), 
+('PT006', 'CT008', 'Durable Phone Case', 1050, 135),
+('PT007', 'CT009', 'High-Quality Earbuds', 1300, 170), 
+('PT008', 'CT010', 'Fast Phone Charger', 1150, 165),
+('PT009', 'CT001', 'Ultimate Smartphone Y', 1400, 155), 
+('PT010', 'CT002', 'Pro Android Phone', 1250, 120),
+('PT011', 'CT004', 'Next Gen IOS Device', 2100, 190),
+('PT012', 'CT005', 'Economy Smartphone', 1600, 195),
+('PT013', 'CT007', 'Quick Charging Pad', 1200, 115),
+('PT014', 'CT008', 'Robust Phone Case', 1700, 200),
+('PT015', 'CT009', 'Superior Earbuds', 1600, 195),
+('PT016', 'CT010', 'Efficient Phone Charger', 1250, 160),
+('PT017', 'CT001', 'Advanced Mobile Phone', 1600, 210),
+('PT018', 'CT002', 'Elite Android Phone', 1600, 220),
+('PT019', 'CT004', 'Modern IOS Device', 1300, 210),
+('PT020', 'CT005', 'Affordable Smartphone', 1050, 145),
+('PT021', 'CT003', 'Android Pro Model VI', 1850, 185),
+('PT022', 'CT006', 'Flagship Galaxy 2', 1400, 210)
+
+INSERT INTO Vendor (VendorID, VendorName, VendorGender, VendorEmail, VendorDOB, VendorAddress)
+VALUES 
+('VR001', 'John Doe', 'Male', 'johndoe@example.com', '1980-04-23', '123 Tech Street'),
+('VR002', 'Jane Smith', 'Female', 'janesmith@example.com', '1975-08-15', '456 Gadget Avenue'),
+('VR003', 'Michael Johnson', 'Male', 'michaeljohnson@example.com', '1982-11-10', '789 Fury Road'),
+('VR004', 'Emily Davis', 'Female', 'emilydavis@example.com', '1985-07-19', '101 Sunset Lane'),
+('VR005', 'Robert Brown', 'Male', 'robertbrown@example.com', '1979-02-14', '102 Smart Blvd'),
+('VR006', 'Linda Garcia', 'Female', 'lindagarcia@example.com', '1983-11-30', '103 White Court'),
+('VR007', 'David Martinez', 'Male', 'davidmartinez@example.com', '1981-09-12', '104 Viridian Road'),
+('VR008', 'Susan Wilson', 'Female', 'susanwilson@example.com', '1978-03-23', '105 Sootopolis Park'),
+('VR009', 'Charles Anderson', 'Male', 'charlesanderson@example.com', '1984-12-22', '106 Gadget St'),
+('VR010', 'Karen Thomas', 'Female', 'karenthomas@example.com', '1982-06-17', '107 Electro Ave'),
+('VR011', 'Daniel Jackson', 'Male', 'danieljackson@example.com', '1980-10-25', '108 Bazaar St'),
+('VR012', 'Patricia Lee', 'Female', 'patricialee@example.com', '1977-04-29', '109 Universe Blvd'),
+('VR013', 'Christopher Harris', 'Male', 'christopherharris@example.com', '1985-01-15', '110 Emporium Dr'),
+('VR014', 'Barbara Clark', 'Female', 'barbaraclark@example.com', '1983-08-05', '111 Tech Plaza'),
+('VR015', 'Paul Rodriguez', 'Male', 'paulrodriguez@example.com', '1981-11-01', '112 Plaza Way'),
+('VR016', 'Nancy Lewis', 'Female', 'nancylewis@example.com', '1979-07-21', '113 Store Blvd'),
+('VR017', 'Mark Robinson', 'Male', 'markrobinson@example.com', '1984-03-30', '114 Digital Plaza'),
+('VR018', 'Lisa Walker', 'Female', 'lisawalker@example.com', '1981-10-10', '115 Haven St'),
+('VR019', 'Steven Perez', 'Male', 'stevenperez@example.com', '1978-05-18', '116 Corner Ave'),
+('VR020', 'Sandra Hall', 'Female', 'sandrahall@example.com', '1982-02-28', '117 Paradise Lane')
+
+INSERT INTO Customer (CustomerID, CustomerName, CustomerGender, CustomerEmail, CustomerDOB, CustomerAddress) 
+VALUES
+('CU001', 'Brayen', 'Male', 'brayen@gmail.com', '1995-01-15', 'Jl. Merdeka No. 123, Jakarta'),
+('CU002', 'Joevito', 'Male', 'joevito@gmail.com', '1996-03-22', 'Jl. Sudirman No. 456, Bandung'),
+('CU003', 'Delvin', 'Male', 'delvin@gmail.com', '1999-05-30', 'Jl. Thamrin No. 789, Surabaya'),
+('CU004', 'Shawn', 'Male', 'shawn@gmail.com', '1998-07-10', 'Jl. Gatot Subroto No. 101, Medan'),
+('CU005', 'Edeline', 'Female', 'edeline@gmail.com', '1999-02-05', 'Jl. Diponegoro No. 202, Semarang'),
+('CU006', 'Vanesa', 'Female', 'vanesa@gmail.com', '1996-11-15', 'Jl. MH Thamrin No. 303, Yogyakarta'),
+('CU007', 'Hejel', 'Female', 'hejel@gmail.com', '1997-06-25', 'Jl. Ahmad Yani No. 404, Makassar'),
+('CU008', 'Jessica', 'Female', 'jessica@gmail.com', '1998-08-18', 'Jl. Kebon Jeruk No. 505, Bali'),
+('CU009', 'Siti', 'Female', 'siti@gmail.com', '1999-04-05', 'Jl. Pemuda No. 606, Malang'),
+('CU010', 'Andre', 'Male', 'andre@gmail.com', '1995-09-30', 'Jl. Asia Afrika No. 707, Bogor')
+
+INSERT INTO PurchaseDetail (PurchaseID, ProductID, Quantity) 
+VALUES
+('PH001', 'PT001', 5),
+('PH002', 'PT003', 3),
+('PH003', 'PT005', 2),
+('PH004', 'PT007', 5),
+('PH005', 'PT009', 4),
+('PH006', 'PT011', 3),
+('PH007', 'PT013', 5),
+('PH008', 'PT015', 4), 
+('PH009', 'PT017', 5),
+('PH010', 'PT019', 3),
+('PH011', 'PT021', 4), 
+('PH012', 'PT001', 3),
+('PH013', 'PT003', 1), 
+('PH014', 'PT005', 2), 
+('PH015', 'PT007', 5), 
+('PH016', 'PT009', 3), 
+('PH017', 'PT011', 4),
+('PH018', 'PT013', 5),
+('PH019', 'PT015', 4), 
+('PH020', 'PT017', 3),
+('PH021', 'PT019', 2),
+('PH022', 'PT021', 1),
+('PH023', 'PT001', 4), 
+('PH024', 'PT003', 5),
+('PH025', 'PT005', 7)
+
+INSERT INTO Staff (StaffID, StaffName, StaffEmail, StaffGender, StaffDOB, StaffAddress) 
+VALUES
+('ST001', 'Budi Santoso', 'budisantoso@gmail.com', 'Male', '1985-03-15', 'Jl. Merdeka No. 123'),
+('ST002', 'Siti Rahayu', 'sitirahayu@gmail.com', 'Female', '1987-09-28', 'Jl. Pahlawan No. 456'),
+('ST003', 'Agus Wibowo', 'aguswibowo@gmail.com', 'Male', '1983-06-10', 'Jl. Gatot Subroto No. 789'),
+('ST004', 'Dewi Sulastri', 'dewisulastri@gmail.com', 'Female', '1989-11-04', 'Jl. Diponegoro No. 101'),
+('ST005', 'Made Sutrisna', 'madesutrisna@gmail.com', 'Male', '1986-07-22', 'Jl. Cokroaminoto No. 102'),
+('ST006', 'Ani Fitriani', 'anifitriani@gmail.com', 'Female', '1990-02-18', 'Jl. Kartini No. 210'),
+('ST007', 'Hadi Nugroho', 'hadinugroho@gmail.com', 'Male', '1984-04-30', 'Jl. Sudirman No. 309'),
+('ST008', 'Rina Kartika', 'rinakartika@gmail.com', 'Female', '1988-08-12', 'Jl. A. Yani No. 508'),
+('ST009', 'Bayu Pratama', 'bayupratama@gmail.com', 'Male', '1982-12-25', 'Jl. Imam Bonjol No. 611'),
+('ST010', 'Sari Indah', 'sariindah@gmail.com', 'Female', '1992-10-08', 'Jl. Veteran No. 712');
+
+INSERT INTO SaleDetail (SaleID, ProductID, Quantity) 
+VALUES
+('SH001', 'PT001', 3),
+('SH002', 'PT002', 7),
+('SH003', 'PT003', 1), --
+('SH004', 'PT004', 5),
+('SH005', 'PT005', 8), --
+('SH006', 'PT006', 4),
+('SH007', 'PT007', 9), --
+('SH008', 'PT008', 2),
+('SH009', 'PT009', 7), --
+('SH010', 'PT010', 2),
+('SH011', 'PT011', 3),
+('SH012', 'PT012', 2),
+('SH013', 'PT013', 6),
+('SH014', 'PT014', 4),
+('SH015', 'PT015', 3),
+('SH016', 'PT016', 7),
+('SH017', 'PT017', 2),
+('SH018', 'PT018', 2),
+('SH019', 'PT019', 3),
+('SH020', 'PT020', 2),
+('SH021', 'PT021', 4),
+('SH022', 'PT022', 3)
+
+INSERT INTO Sale(SaleID, StaffID, CustomerID, TransactionDate)
+Values
+('SH001', 'ST001', 'CU001', '2024-10-02'),
+('SH002', 'ST002', 'CU002', '2024-02-09'),
+('SH003', 'ST003', 'CU003', '2023-01-11'),
+('SH004', 'ST004', 'CU004', '2024-04-15'),
+('SH005', 'ST005', 'CU005', '2023-03-05'),
+('SH006', 'ST006', 'CU007', '2023-07-25'),
+('SH007', 'ST007', 'CU007', '2023-05-16'),
+('SH008', 'ST008', 'CU009', '2023-11-23'),
+('SH009', 'ST009', 'CU009', '2023-07-19'),
+('SH010', 'ST010', 'CU009', '2023-12-27')
+
+INSERT INTO Purchase (PurchaseID, StaffID, VendorID, PurchaseDate) 
+VALUES
+('PH001', 'ST001', 'VR001', '2024-06-01'),
+('PH002', 'ST002', 'VR002', '2024-06-02'),
+('PH003', 'ST003', 'VR003', '2024-06-03'),
+('PH004', 'ST004', 'VR004', '2024-06-04'),
+('PH005', 'ST002', 'VR005', '2024-06-05'),
+('PH006', 'ST001', 'VR006', '2024-06-06'),
+('PH007', 'ST002', 'VR007', '2024-06-07'),
+('PH008', 'ST003', 'VR008', '2024-06-08'),
+('PH009', 'ST004', 'VR009', '2024-06-09'),
+('PH010', 'ST002', 'VR010', '2024-06-10'),
+('PH011', 'ST003', 'VR011', '2024-06-11'),
+('PH012', 'ST005', 'VR012', '2024-06-12'),
+('PH013', 'ST002', 'VR013', '2024-06-13'),
+('PH014', 'ST003', 'VR014', '2024-06-14'),
+('PH015', 'ST005', 'VR015', '2024-06-15')
