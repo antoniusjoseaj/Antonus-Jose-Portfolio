@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from models import User, Workout, Exercise, WorkoutExercise
-from schemas import UserCreate, UserUpdate, WorkoutCreate, ExerciseCreate, WorkoutExerciseCreate, WorkoutExerciseUpdate
+from WorkoutTracker_Dynami.models import User, Workout, Exercise, WorkoutExercise
+from WorkoutTracker_Dynami.schemas import UserCreate, UserUpdate, WorkoutCreate, ExerciseCreate, WorkoutExerciseCreate, WorkoutExerciseUpdate
 from passlib.context import CryptContext
 
 #User
