@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from WorkoutTracker_Dynami.database import Base
 
 class User(Base):
@@ -12,13 +13,18 @@ class User(Base):
     weight = Column(Float)
     bmi = Column(Float)
 
+    workouts = relationship("Workout", back_populates="user")
+
 class Workout(Base):
     __tablename__ = "workouts"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     workout_date = Column(DateTime)
-    workout_duration = Column(Integer) #Hours
+    workout_duration = Column(Integer)
+
+    user = relationship("User", back_populates="workouts")
+    exercises = relationship("WorkoutExercise", back_populates="workout")
 
 class Exercise(Base):
     __tablename__ = "exercises"
@@ -26,6 +32,8 @@ class Exercise(Base):
     id = Column(Integer, primary_key=True)
     exercise_name = Column(String, nullable=False)
     exercise_type = Column(String)
+
+    workouts = relationship("WorkoutExercise", back_populates="exercise")
 
 class WorkoutExercise(Base):
     __tablename__ = "workout_exercises"
@@ -36,12 +44,15 @@ class WorkoutExercise(Base):
 
     sets = Column(Integer, nullable=True)
     reps = Column(Integer, nullable=True)
-    weight = Column(Float, nullable=True) #kilograms
-    distance = Column(Float, nullable=True) #meters or kilometers
-    exercise_duration = Column(Integer, nullable=True) #Seconds
-    rest_time = Column(Integer, nullable=True) #seconds
-
+    weight = Column(Float, nullable=True)
+    distance = Column(Float, nullable=True)
+    exercise_duration = Column(Integer, nullable=True)
+    rest_time = Column(Integer, nullable=True)
     notes = Column(String, nullable=True)
+
+    workout = relationship("Workout", back_populates="exercises")
+    exercise = relationship("Exercise", back_populates="workouts")
+
 
 
   

@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from WorkoutTracker_Dynami import models
 from WorkoutTracker_Dynami.models import User, Workout, Exercise, WorkoutExercise
 from WorkoutTracker_Dynami.schemas import UserCreate, UserUpdate, WorkoutCreate, ExerciseCreate, WorkoutExerciseCreate, WorkoutExerciseUpdate
 from passlib.context import CryptContext
@@ -7,7 +8,7 @@ from passlib.context import CryptContext
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return pwd_context.hash(password[:72])
 
 def create_user(db: Session, user: UserCreate):
     hashed_password = hash_password(user.password)

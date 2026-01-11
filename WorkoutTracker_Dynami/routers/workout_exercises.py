@@ -1,10 +1,16 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from WorkoutTracker_Dynami import schemas, crud
+from WorkoutTracker_Dynami.database import get_db
+from sqlalchemy.orm import Session
 
 router = APIRouter(
-    prefix="/workout_exercises",
-    tags=["workout_exercises"]
+    prefix="/workout-exercises",
+    tags=["workout-exercises"]
 )
 
-@router.get("/")
-def get_exercises():
-    return {"message": "Workout_Exercises endpoint"}
+@router.post("/", response_model=schemas.WorkoutExerciseRead)
+def add_exercise(
+    data: schemas.WorkoutExerciseCreate,
+    db: Session = Depends(get_db)
+):
+    return crud.create_workout_exercise(db, data)
